@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+.app {
+  @apply w-screen h-screen m-0 p-0 overflow-hidden;
+}
+
+.cesium-wrapper {
+  @apply w-full h-full relative;
+}
+
+.cesium-container {
+  @apply w-full h-full;
+}
+
+.cesium-loading {
+  @apply absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1000] bg-black/70 text-white px-10 py-5 rounded-lg;
+}
+
+.cesium-error {
+  @apply flex justify-center items-center h-screen text-red-500 bg-[#1a1a1a];
+}

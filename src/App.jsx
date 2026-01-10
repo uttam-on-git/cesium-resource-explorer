@@ -1,9 +1,11 @@
-import './App.css'
+import "./App.css"
+import CesiumViewer from "./components/CesiumViewer"
 
 function App() {
-
   return (
-    <div>hello</div>
+    <div className="app">
+      <CesiumViewer />
+    </div>
   )
 }
 
