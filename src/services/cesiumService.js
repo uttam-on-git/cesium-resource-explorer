@@ -191,3 +191,126 @@ async function addGeoJson(viewer, assetId) {
   viewer.dataSources.add(dataSource);
   return dataSource;
 }
+
+// --- My Location feature ---
+
+// store reference to the user location marker so we can update it
+let userLocationEntity = null;
+
+// fly camera to user's current location and add a marker
+export function flyToUserLocation(viewer) {
+  return new Promise((resolve, reject) => {
+    if (!viewer || viewer.isDestroyed()) {
+      reject(new Error('Viewer not available'));
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation is not supported by your browser'));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { longitude, latitude } = position.coords;
+
+        // remove existing marker if any
+        if (userLocationEntity) {
+          viewer.entities.remove(userLocationEntity);
+        }
+
+        // add a marker at the user's location
+        userLocationEntity = viewer.entities.add({
+          name: 'My Location',
+          position: Cesium.Cartesian3.fromDegrees(longitude, latitude),
+          billboard: {
+            image: createLocationMarkerImage(),
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+            scale: 1.0,
+          },
+          label: {
+            text: 'You are here',
+            font: '12px monospace',
+            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+            outlineWidth: 2,
+            outlineColor: Cesium.Color.BLACK,
+            fillColor: Cesium.Color.CYAN,
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+            pixelOffset: new Cesium.Cartesian2(0, -40),
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          },
+        });
+
+        // fly to the location with ~5000m altitude
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, 5000),
+          orientation: {
+            heading: Cesium.Math.toRadians(0),
+            pitch: Cesium.Math.toRadians(-45),
+            roll: 0,
+          },
+          duration: 2,
+        });
+
+        resolve({ longitude, latitude });
+      },
+      (error) => {
+        let message;
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            message = 'Location permission denied';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            message = 'Location information unavailable';
+            break;
+          case error.TIMEOUT:
+            message = 'Location request timed out';
+            break;
+          default:
+            message = 'Unknown location error';
+        }
+        reject(new Error(message));
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000,
+      }
+    );
+  });
+}
+
+// create a simple location marker using canvas
+function createLocationMarkerImage() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 32;
+  canvas.height = 40;
+  const ctx = canvas.getContext('2d');
+
+  // pin shape
+  ctx.beginPath();
+  ctx.arc(16, 14, 12, Math.PI, 0, false);
+  ctx.lineTo(16, 38);
+  ctx.closePath();
+
+  // gradient fill - cyan theme to match the app
+  const gradient = ctx.createLinearGradient(0, 0, 0, 40);
+  gradient.addColorStop(0, '#00d4ff');
+  gradient.addColorStop(1, '#0891b2');
+  ctx.fillStyle = gradient;
+  ctx.fill();
+
+  // white border
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // inner circle
+  ctx.beginPath();
+  ctx.arc(16, 14, 5, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+
+  return canvas.toDataURL();
+}
