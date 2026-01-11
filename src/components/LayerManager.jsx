@@ -10,7 +10,6 @@ import {
   Crosshair,
   Loader2,
   PanelRightClose,
-  PanelRightOpen,
   Layers,
 } from 'lucide-react';
 
@@ -20,6 +19,14 @@ const TYPE_ICONS = {
   terrain: Mountain,
   '3dtiles': Building2,
   geojson: MapPin,
+};
+
+// type badge classes
+const TYPE_BADGE_CLASSES = {
+  imagery: 'layer-type-imagery',
+  terrain: 'layer-type-terrain',
+  '3dtiles': 'layer-type-3dtiles',
+  geojson: 'layer-type-geojson',
 };
 
 export default function LayerManager({ layerStates, toggleLayer, toggleVisibility, flyTo }) {
@@ -49,7 +56,7 @@ export default function LayerManager({ layerStates, toggleLayer, toggleVisibilit
   return (
     <div className="layer-manager">
       <div className="layer-manager-header">
-        <h2 className="layer-manager-title">Layers</h2>
+        <h2 className="layer-manager-title">Data Layers</h2>
         <button
           onClick={() => setCollapsed(true)}
           className="layer-manager-toggle"
@@ -63,9 +70,13 @@ export default function LayerManager({ layerStates, toggleLayer, toggleVisibilit
         {ASSETS.map(asset => {
           const state = layerStates[asset.assetId];
           const TypeIcon = TYPE_ICONS[asset.type];
+          const typeBadgeClass = TYPE_BADGE_CLASSES[asset.type];
 
           return (
-            <div key={asset.id} className="layer-item">
+            <div
+              key={asset.id}
+              className={`layer-item ${state.loaded ? 'layer-loaded' : ''}`}
+            >
               <div className="layer-item-header">
                 <label className="layer-checkbox-label">
                   <input
@@ -79,6 +90,11 @@ export default function LayerManager({ layerStates, toggleLayer, toggleVisibilit
                   <span className="layer-name">{asset.name}</span>
                 </label>
 
+                {/* type badge */}
+                <span className={`layer-type-badge ${typeBadgeClass}`}>
+                  {asset.type === '3dtiles' ? '3D' : asset.type.slice(0, 3).toUpperCase()}
+                </span>
+
                 {/* show loading spinner */}
                 {state.loading && <Loader2 size={16} className="layer-loading" />}
               </div>
@@ -90,8 +106,8 @@ export default function LayerManager({ layerStates, toggleLayer, toggleVisibilit
                   {asset.type !== 'terrain' && (
                     <button
                       onClick={() => toggleVisibility(asset)}
-                      className="layer-btn"
-                      title={state.visible ? 'Hide' : 'Show'}
+                      className={`layer-btn ${state.visible ? 'layer-btn-visible' : 'layer-btn-hidden'}`}
+                      title={state.visible ? 'Hide layer' : 'Show layer'}
                     >
                       {state.visible ? <Eye size={14} /> : <EyeOff size={14} />}
                     </button>
@@ -101,8 +117,8 @@ export default function LayerManager({ layerStates, toggleLayer, toggleVisibilit
                   {(asset.type === '3dtiles' || asset.type === 'geojson') && (
                     <button
                       onClick={() => flyTo(asset)}
-                      className="layer-btn"
-                      title="Fly to"
+                      className="layer-btn layer-btn-fly"
+                      title="Navigate to layer"
                     >
                       <Crosshair size={14} />
                     </button>
@@ -112,11 +128,16 @@ export default function LayerManager({ layerStates, toggleLayer, toggleVisibilit
 
               {/* show error if something went wrong */}
               {state.error && (
-                <div className="layer-error">Error: {state.error}</div>
+                <div className="layer-error">
+                  <span>ERROR:</span> {state.error}
+                </div>
               )}
 
-              {/* description */}
-              <p className="layer-description">{asset.description}</p>
+              {/* description with optional size */}
+              <p className="layer-description">
+                {asset.description}
+                {asset.size && <span className="layer-size">{asset.size}</span>}
+              </p>
             </div>
           );
         })}

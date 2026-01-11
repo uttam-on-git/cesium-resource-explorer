@@ -1,11 +1,57 @@
 @import "tailwindcss";
 @import "cesium/Build/Cesium/Widgets/widgets.css";
 
-.app {
-  @apply w-screen h-screen m-0 p-0 overflow-hidden relative;
+/* ============================================
+   SATELLITE COMMAND THEME
+   Mission control aesthetic with cyan telemetry
+   and amber action indicators
+   ============================================ */
+
+:root {
+  /* Deep space backgrounds */
+  --space-void: #030712;
+  --space-deep: #0a0e17;
+  --space-panel: #0f1419;
+  --space-elevated: #151c25;
+
+  /* Cyan telemetry - primary data color */
+  --cyan-glow: #00d4ff;
+  --cyan-bright: #22d3ee;
+  --cyan-muted: #0e7490;
+  --cyan-dim: #164e63;
+
+  /* Amber action - secondary accent */
+  --amber-hot: #f59e0b;
+  --amber-warm: #fbbf24;
+  --amber-dim: #78350f;
+
+  /* Signal states */
+  --signal-active: #10b981;
+  --signal-error: #ef4444;
+  --signal-warning: #f59e0b;
+
+  /* Text hierarchy */
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #475569;
+  --text-dim: #334155;
+
+  /* Typography */
+  --font-mono: 'Space Mono', monospace;
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
 }
 
-/* cesium viewer styles */
+/* Base app container */
+.app {
+  @apply w-screen h-screen m-0 p-0 overflow-hidden relative;
+  background: var(--space-void);
+  font-family: var(--font-sans);
+}
+
+/* ============================================
+   CESIUM VIEWER STYLES
+   ============================================ */
+
 .cesium-wrapper {
   @apply w-full h-full relative;
 }
@@ -14,84 +60,1395 @@
   @apply w-full h-full;
 }
 
+/* Satellite command loading screen */
 .cesium-loading {
-  @apply absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1000] bg-black/70 text-white px-10 py-5 rounded-lg;
+  @apply absolute inset-0 z-[1000] flex flex-col items-center justify-center;
+  background: var(--space-void);
+}
+
+.loading-orbital {
+  @apply relative w-32 h-32 mb-8;
+}
+
+.loading-ring {
+  @apply absolute inset-0 rounded-full border-2;
+  border-color: var(--cyan-dim);
+  animation: orbital-spin 3s linear infinite;
+}
+
+.loading-ring:nth-child(1) {
+  animation-duration: 3s;
+  border-color: var(--cyan-glow);
+  opacity: 0.3;
+}
+
+.loading-ring:nth-child(2) {
+  @apply inset-3;
+  animation-duration: 2s;
+  animation-direction: reverse;
+  border-color: var(--cyan-bright);
+  opacity: 0.5;
+}
+
+.loading-ring:nth-child(3) {
+  @apply inset-6;
+  animation-duration: 1.5s;
+  border-color: var(--cyan-glow);
+  opacity: 0.7;
+}
+
+.loading-core {
+  @apply absolute inset-10 rounded-full;
+  background: radial-gradient(circle, var(--cyan-glow) 0%, transparent 70%);
+  animation: core-pulse 2s ease-in-out infinite;
+}
+
+.loading-text {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cyan-bright);
+  animation: text-flicker 0.1s infinite;
+}
+
+.loading-status {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+  letter-spacing: 0.1em;
+}
+
+@keyframes orbital-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes core-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+@keyframes text-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
 }
 
 .cesium-error {
-  @apply flex justify-center items-center h-screen text-red-500 bg-[#1a1a1a];
+  @apply flex flex-col justify-center items-center h-screen gap-4;
+  background: var(--space-void);
+  font-family: var(--font-mono);
 }
 
-/* layer manager panel */
+.cesium-error p {
+  color: var(--signal-error);
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+}
+
+/* ============================================
+   LAYER MANAGER PANEL
+   Mission control data panel
+   ============================================ */
+
 .layer-manager {
-  @apply absolute top-4 right-4 z-[1000] bg-gray-900/90 backdrop-blur-sm text-white rounded-lg shadow-xl w-72 max-h-[80vh] overflow-y-auto;
+  @apply absolute top-4 right-4 z-[1000] w-80 max-h-[85vh] overflow-hidden;
+  background: var(--space-panel);
+  border: 1px solid var(--cyan-dim);
+  animation: panel-slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Corner brackets effect */
+  --bracket-size: 12px;
+  --bracket-thickness: 2px;
+  clip-path: polygon(
+    0 var(--bracket-size),
+    var(--bracket-size) 0,
+    calc(100% - var(--bracket-size)) 0,
+    100% var(--bracket-size),
+    100% calc(100% - var(--bracket-size)),
+    calc(100% - var(--bracket-size)) 100%,
+    var(--bracket-size) 100%,
+    0 calc(100% - var(--bracket-size))
+  );
+}
+
+.layer-manager::before {
+  content: '';
+  @apply absolute inset-0 pointer-events-none;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 212, 255, 0.03) 0%,
+    transparent 30%,
+    transparent 70%,
+    rgba(0, 212, 255, 0.02) 100%
+  );
+}
+
+/* Scan line overlay */
+.layer-manager::after {
+  content: '';
+  @apply absolute inset-0 pointer-events-none opacity-[0.03];
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    var(--cyan-glow) 2px,
+    var(--cyan-glow) 4px
+  );
+  animation: scan-lines 8s linear infinite;
+}
+
+@keyframes scan-lines {
+  from { transform: translateY(0); }
+  to { transform: translateY(4px); }
+}
+
+@keyframes panel-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Panel header */
+.layer-manager-header {
+  @apply flex items-center justify-between px-4 py-3;
+  border-bottom: 1px solid var(--cyan-dim);
+  background: linear-gradient(180deg, var(--space-elevated) 0%, var(--space-panel) 100%);
 }
 
 .layer-manager-title {
-  @apply text-lg font-semibold;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--cyan-bright);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
+.layer-manager-title::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--signal-active);
+  border-radius: 50%;
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  50% { opacity: 0.8; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+}
+
+.layer-manager-toggle {
+  @apply p-2 transition-all duration-200;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.layer-manager-toggle:hover {
+  color: var(--cyan-bright);
+  background: rgba(0, 212, 255, 0.1);
+  border-color: var(--cyan-dim);
+}
+
+/* Layer list */
 .layer-list {
-  @apply p-2;
+  @apply p-3 overflow-y-auto;
+  max-height: calc(85vh - 60px);
 }
 
+.layer-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.layer-list::-webkit-scrollbar-track {
+  background: var(--space-deep);
+}
+
+.layer-list::-webkit-scrollbar-thumb {
+  background: var(--cyan-dim);
+  border-radius: 2px;
+}
+
+/* Individual layer item */
 .layer-item {
-  @apply p-3 rounded-lg hover:bg-gray-800/50 transition-colors mb-1;
+  @apply relative p-3 mb-2 transition-all duration-300;
+  background: var(--space-deep);
+  border: 1px solid var(--text-dim);
+  animation: layer-appear 0.3s ease-out backwards;
+}
+
+.layer-item:nth-child(1) { animation-delay: 0.05s; }
+.layer-item:nth-child(2) { animation-delay: 0.1s; }
+.layer-item:nth-child(3) { animation-delay: 0.15s; }
+.layer-item:nth-child(4) { animation-delay: 0.2s; }
+.layer-item:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes layer-appear {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.layer-item:hover {
+  border-color: var(--cyan-dim);
+  background: var(--space-elevated);
+}
+
+.layer-item.layer-loaded {
+  border-color: var(--cyan-muted);
+  background: linear-gradient(90deg, rgba(0, 212, 255, 0.05) 0%, transparent 100%);
+}
+
+.layer-item.layer-loaded::before {
+  content: '';
+  @apply absolute left-0 top-0 bottom-0 w-[2px];
+  background: var(--cyan-glow);
+  box-shadow: 0 0 8px var(--cyan-glow);
 }
 
 .layer-item-header {
   @apply flex items-center justify-between;
 }
 
+/* Custom checkbox */
 .layer-checkbox-label {
-  @apply flex items-center gap-2 cursor-pointer flex-1;
+  @apply flex items-center gap-3 cursor-pointer flex-1;
 }
 
 .layer-checkbox {
-  @apply w-4 h-4 accent-blue-500;
+  @apply appearance-none w-4 h-4 border cursor-pointer transition-all duration-200;
+  border-color: var(--text-dim);
+  background: var(--space-void);
 }
 
+.layer-checkbox:hover {
+  border-color: var(--cyan-muted);
+}
+
+.layer-checkbox:checked {
+  border-color: var(--cyan-bright);
+  background: var(--cyan-glow);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+}
+
+.layer-checkbox:checked::after {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='%23030712' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+
+.layer-checkbox:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Layer type icons */
 .layer-icon {
-  @apply text-gray-400;
+  color: var(--text-muted);
+  transition: color 0.2s;
 }
 
+.layer-item:hover .layer-icon {
+  color: var(--cyan-muted);
+}
+
+.layer-loaded .layer-icon {
+  color: var(--cyan-bright);
+}
+
+/* Layer name */
 .layer-name {
-  @apply text-sm font-medium;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  transition: color 0.2s;
 }
 
+.layer-loaded .layer-name {
+  color: var(--cyan-bright);
+}
+
+/* Loading indicator */
 .layer-loading {
-  @apply animate-spin text-blue-400;
+  color: var(--amber-warm);
+  animation: spin-pulse 1s linear infinite;
 }
 
+@keyframes spin-pulse {
+  0% { transform: rotate(0deg); opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { transform: rotate(360deg); opacity: 1; }
+}
+
+/* Layer controls */
 .layer-controls {
-  @apply flex gap-1 mt-2 ml-6;
+  @apply flex gap-2 mt-3 ml-7;
 }
 
 .layer-btn {
-  @apply p-1.5 rounded hover:bg-gray-700 transition-colors text-gray-400 hover:text-white;
+  @apply p-2 transition-all duration-200 flex items-center justify-center;
+  background: var(--space-void);
+  border: 1px solid var(--text-dim);
+  color: var(--text-secondary);
+  min-width: 32px;
+  min-height: 32px;
 }
 
+.layer-btn:hover {
+  border-color: var(--cyan-muted);
+  color: var(--cyan-bright);
+  background: rgba(0, 212, 255, 0.1);
+}
+
+.layer-btn-fly {
+  border-color: var(--amber-dim);
+  color: var(--amber-warm);
+}
+
+.layer-btn-fly:hover {
+  border-color: var(--amber-warm);
+  background: rgba(245, 158, 11, 0.1);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
+}
+
+.layer-btn-fly:active {
+  animation: target-lock 0.3s ease-out;
+}
+
+@keyframes target-lock {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+/* Visibility states */
+.layer-btn-visible {
+  color: var(--signal-active);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.layer-btn-hidden {
+  color: var(--text-muted);
+  border-color: var(--text-dim);
+}
+
+/* Error state */
 .layer-error {
-  @apply text-xs text-red-400 mt-1 ml-6;
+  @apply text-xs mt-2 ml-7 px-2 py-1;
+  font-family: var(--font-mono);
+  color: var(--signal-error);
+  background: rgba(239, 68, 68, 0.1);
+  border-left: 2px solid var(--signal-error);
 }
 
+/* Description */
 .layer-description {
-  @apply text-xs text-gray-500 mt-1 ml-6;
+  @apply text-xs mt-2 ml-7;
+  font-family: var(--font-sans);
+  color: var(--text-muted);
+  line-height: 1.4;
 }
 
-/* collapsed state */
+.layer-size {
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  font-size: 0.625rem;
+  margin-left: 0.5rem;
+  padding: 0.125rem 0.375rem;
+  background: var(--space-void);
+  border: 1px solid var(--text-dim);
+}
+
+/* ============================================
+   COLLAPSED STATE
+   ============================================ */
+
 .layer-manager-collapsed {
   @apply absolute top-4 right-4 z-[1000];
 }
 
-.layer-manager-header {
-  @apply flex items-center justify-between px-4 py-3 border-b border-gray-700;
+.layer-manager-collapsed .layer-manager-toggle {
+  @apply relative p-3;
+  background: var(--space-panel);
+  border: 1px solid var(--cyan-dim);
+  color: var(--cyan-bright);
+
+  clip-path: polygon(
+    0 8px,
+    8px 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
 }
 
-.layer-manager-toggle {
-  @apply p-1.5 rounded hover:bg-gray-700 transition-colors text-gray-400 hover:text-white relative;
+.layer-manager-collapsed .layer-manager-toggle:hover {
+  background: var(--space-elevated);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
 }
 
 .layer-badge {
-  @apply absolute -top-1 -right-1 bg-blue-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center;
+  @apply absolute -top-1 -right-1 text-xs w-5 h-5 flex items-center justify-center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  background: var(--amber-hot);
+  color: var(--space-void);
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* ============================================
+   LAYER TYPE BADGES
+   ============================================ */
+
+.layer-type-badge {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.125rem 0.375rem;
+  margin-left: auto;
+}
+
+.layer-type-imagery {
+  color: var(--cyan-bright);
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid var(--cyan-dim);
+}
+
+.layer-type-terrain {
+  color: var(--signal-active);
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.layer-type-3dtiles {
+  color: var(--amber-warm);
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid var(--amber-dim);
+}
+
+.layer-type-geojson {
+  color: #a78bfa;
+  background: rgba(167, 139, 250, 0.1);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+}
+
+/* ============================================
+   GLOBAL UTILITIES
+   ============================================ */
+
+/* Hide Cesium credits for cleaner look (optional) */
+.cesium-viewer-bottom {
+  display: none !important;
+}
+
+/* Custom selection color */
+::selection {
+  background: var(--cyan-glow);
+  color: var(--space-void);
+}
+
+/* ============================================
+   LOCATION SEARCH
+   Navigation command panel
+   ============================================ */
+
+.location-search {
+  @apply absolute top-4 left-4 z-[1000] w-72;
+  background: var(--space-panel);
+  border: 1px solid var(--cyan-dim);
+  animation: panel-slide-in-left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Corner brackets effect */
+  clip-path: polygon(
+    0 12px,
+    12px 0,
+    calc(100% - 12px) 0,
+    100% 12px,
+    100% calc(100% - 12px),
+    calc(100% - 12px) 100%,
+    12px 100%,
+    0 calc(100% - 12px)
+  );
+}
+
+@keyframes panel-slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.location-search-header {
+  @apply px-4 py-2;
+  border-bottom: 1px solid var(--cyan-dim);
+  background: linear-gradient(180deg, var(--space-elevated) 0%, var(--space-panel) 100%);
+}
+
+.location-search-label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.location-search-input-wrapper {
+  @apply flex items-center gap-2 px-3 py-2;
+  background: var(--space-deep);
+  border-bottom: 1px solid var(--text-dim);
+}
+
+.location-search-icon {
+  color: var(--cyan-muted);
+  flex-shrink: 0;
+}
+
+.location-search-input {
+  @apply flex-1 bg-transparent border-none outline-none;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.location-search-input::placeholder {
+  color: var(--text-dim);
+}
+
+.location-search-input:focus {
+  outline: none;
+}
+
+.location-search-toggle {
+  @apply p-1 transition-all duration-200;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.location-search-toggle:hover {
+  color: var(--cyan-bright);
+}
+
+/* Dropdown */
+.location-dropdown {
+  @apply max-h-64 overflow-hidden;
+  background: var(--space-panel);
+  animation: dropdown-appear 0.2s ease-out;
+}
+
+@keyframes dropdown-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.location-dropdown-header {
+  @apply flex items-center gap-2 px-3 py-2;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--space-void);
+  border-bottom: 1px solid var(--text-dim);
+}
+
+.location-dropdown-header svg {
+  color: var(--amber-warm);
+}
+
+.location-list {
+  @apply list-none m-0 p-0 overflow-y-auto;
+  max-height: 220px;
+}
+
+.location-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.location-list::-webkit-scrollbar-track {
+  background: var(--space-deep);
+}
+
+.location-list::-webkit-scrollbar-thumb {
+  background: var(--cyan-dim);
+  border-radius: 2px;
+}
+
+.location-item {
+  @apply flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-all duration-200;
+  border-left: 2px solid transparent;
+  animation: location-appear 0.2s ease-out backwards;
+}
+
+@keyframes location-appear {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.location-item:hover,
+.location-item-highlighted {
+  background: var(--space-elevated);
+  border-left-color: var(--cyan-muted);
+}
+
+.location-item-active {
+  background: rgba(0, 212, 255, 0.05);
+  border-left-color: var(--cyan-glow);
+}
+
+.location-item-active .location-item-icon {
+  color: var(--cyan-glow);
+}
+
+.text-signal-error {
+  color: var(--signal-error);
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
+}
+
+.location-item-icon {
+  color: var(--amber-warm);
+  flex-shrink: 0;
+}
+
+.location-item:hover .location-item-icon {
+  color: var(--amber-hot);
+}
+
+.location-item-content {
+  @apply flex flex-col gap-0.5 min-w-0;
+}
+
+.location-item-name {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.location-item:hover .location-item-name {
+  color: var(--cyan-bright);
+}
+
+.location-item-coords {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.location-empty {
+  @apply px-3 py-4 text-center;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+/* Clear button */
+.location-search-clear {
+  @apply p-1 transition-all duration-200;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.location-search-clear:hover {
+  color: var(--signal-error);
+}
+
+/* Grouped results */
+.location-results {
+  @apply overflow-y-auto;
+  max-height: 320px;
+}
+
+.location-results::-webkit-scrollbar {
+  width: 4px;
+}
+
+.location-results::-webkit-scrollbar-track {
+  background: var(--space-deep);
+}
+
+.location-results::-webkit-scrollbar-thumb {
+  background: var(--cyan-dim);
+  border-radius: 2px;
+}
+
+.search-group {
+  @apply border-b;
+  border-color: var(--text-dim);
+}
+
+.search-group:last-child {
+  border-bottom: none;
+}
+
+.search-group-header {
+  @apply flex items-center gap-2 px-3 py-2 sticky top-0;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--space-void);
+  border-bottom: 1px solid var(--text-dim);
+  z-index: 1;
+}
+
+.search-group-header svg {
+  color: var(--cyan-muted);
+}
+
+.search-group-count {
+  @apply ml-auto;
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  padding: 0.125rem 0.375rem;
+  background: var(--space-deep);
+  border: 1px solid var(--text-dim);
+  color: var(--text-secondary);
+}
+
+/* Location-specific icon */
+.location-icon {
+  color: var(--amber-warm);
+}
+
+.location-item:hover .location-icon {
+  color: var(--amber-hot);
+}
+
+/* Layer-specific icons by type */
+.layer-icon-imagery {
+  color: var(--cyan-bright);
+}
+
+.layer-icon-terrain {
+  color: var(--signal-active);
+}
+
+.layer-icon-3dtiles {
+  color: var(--amber-warm);
+}
+
+.layer-icon-geojson {
+  color: #a78bfa;
+}
+
+/* Layer loaded state in search */
+.layer-item-loaded {
+  background: rgba(0, 212, 255, 0.03);
+}
+
+.layer-item-loaded .location-item-name {
+  color: var(--cyan-bright);
+}
+
+/* Layer status badge */
+.layer-status-badge {
+  @apply ml-2 px-1.5 py-0.5;
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: rgba(0, 212, 255, 0.15);
+  border: 1px solid var(--cyan-dim);
+  color: var(--cyan-bright);
+  vertical-align: middle;
+}
+
+/* Layer meta info */
+.location-item-meta {
+  @apply flex items-center gap-2;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--text-muted);
+}
+
+.layer-type-label {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.layer-size-label {
+  color: var(--text-dim);
+}
+
+.layer-size-label::before {
+  content: '•';
+  margin-right: 0.5rem;
+  color: var(--text-dim);
+}
+
+/* ============================================
+   MY LOCATION BUTTON
+   Geolocation navigation control
+   ============================================ */
+
+.my-location {
+  @apply absolute bottom-6 left-4 z-[1000];
+  animation: panel-slide-in-left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.my-location-btn {
+  @apply flex items-center gap-2 px-4 py-2.5 transition-all duration-200;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cyan-bright);
+  background: var(--space-panel);
+  border: 1px solid var(--cyan-dim);
+  cursor: pointer;
+
+  /* Corner brackets effect */
+  clip-path: polygon(
+    0 8px,
+    8px 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+}
+
+.my-location-btn:hover {
+  background: var(--space-elevated);
+  border-color: var(--cyan-bright);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+}
+
+.my-location-btn:active {
+  transform: scale(0.98);
+}
+
+.my-location-btn:disabled {
+  cursor: wait;
+}
+
+.my-location-loading {
+  color: var(--amber-warm);
+  border-color: var(--amber-dim);
+}
+
+.my-location-loading:hover {
+  border-color: var(--amber-warm);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+}
+
+.my-location-error {
+  color: var(--signal-error);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.my-location-icon {
+  flex-shrink: 0;
+}
+
+.my-location-icon.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.my-location-text {
+  white-space: nowrap;
+}
+
+.my-location-error-msg {
+  @apply mt-2 px-3 py-2;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--signal-error);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  clip-path: polygon(
+    0 4px,
+    4px 0,
+    calc(100% - 4px) 0,
+    100% 4px,
+    100% calc(100% - 4px),
+    calc(100% - 4px) 100%,
+    4px 100%,
+    0 calc(100% - 4px)
+  );
+}
+
+/* ============================================
+   LOCATION BEACON - Radar Navigation Interface
+   A distinctive hexagonal radar-style button
+   ============================================ */
+
+.loc-beacon {
+  @apply absolute bottom-6 left-4 z-[1000];
+  animation: beacon-materialize 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes beacon-materialize {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Ambient glow beneath the button */
+.loc-beacon__ambient {
+  @apply absolute -inset-4 -z-10 rounded-full opacity-0 transition-opacity duration-500;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 212, 255, 0.15) 0%,
+    transparent 70%
+  );
+  filter: blur(20px);
+}
+
+.loc-beacon:hover .loc-beacon__ambient {
+  opacity: 1;
+}
+
+.loc-beacon--scanning .loc-beacon__ambient {
+  opacity: 1;
+  animation: ambient-pulse 1.5s ease-in-out infinite;
+}
+
+.loc-beacon--locked .loc-beacon__ambient {
+  opacity: 1;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(16, 185, 129, 0.2) 0%,
+    transparent 70%
+  );
+}
+
+@keyframes ambient-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+/* Main button container */
+.loc-beacon__btn {
+  @apply relative flex flex-col items-center gap-2 p-0 border-none bg-transparent cursor-pointer;
+  width: 72px;
+  outline: none;
+}
+
+.loc-beacon__btn:disabled {
+  cursor: wait;
+}
+
+/* Hexagonal frame */
+.loc-beacon__frame {
+  @apply absolute inset-0 w-full h-full pointer-events-none;
+  width: 72px;
+  height: 80px;
+}
+
+.loc-beacon__hex {
+  fill: var(--space-panel);
+  stroke: var(--cyan-dim);
+  stroke-width: 1.5;
+  transition: all 0.3s ease;
+}
+
+.loc-beacon:hover .loc-beacon__hex {
+  fill: var(--space-elevated);
+  stroke: var(--cyan-muted);
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.3));
+}
+
+.loc-beacon--scanning .loc-beacon__hex {
+  stroke: var(--amber-warm);
+  animation: hex-scan-pulse 1s ease-in-out infinite;
+}
+
+.loc-beacon--error .loc-beacon__hex {
+  stroke: var(--signal-error);
+  fill: rgba(239, 68, 68, 0.05);
+}
+
+.loc-beacon--locked .loc-beacon__hex {
+  stroke: var(--signal-active);
+  filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.5));
+}
+
+@keyframes hex-scan-pulse {
+  0%, 100% { stroke-opacity: 1; }
+  50% { stroke-opacity: 0.5; }
+}
+
+/* Corner accent lines */
+.loc-beacon__accent {
+  stroke: var(--cyan-glow);
+  stroke-width: 2;
+  opacity: 0.5;
+  transition: opacity 0.3s;
+}
+
+.loc-beacon:hover .loc-beacon__accent {
+  opacity: 1;
+}
+
+.loc-beacon--locked .loc-beacon__accent {
+  stroke: var(--signal-active);
+  opacity: 1;
+}
+
+/* Radar display area */
+.loc-beacon__radar {
+  @apply relative z-10;
+  width: 48px;
+  height: 48px;
+  margin-top: 8px;
+}
+
+.loc-beacon__rings {
+  width: 100%;
+  height: 100%;
+}
+
+/* Radar rings */
+.loc-beacon__ring {
+  fill: none;
+  stroke-width: 0.5;
+  transition: all 0.3s ease;
+}
+
+.loc-beacon__ring--outer {
+  stroke: var(--cyan-dim);
+  opacity: 0.4;
+}
+
+.loc-beacon__ring--mid {
+  stroke: var(--cyan-muted);
+  opacity: 0.6;
+}
+
+.loc-beacon__ring--inner {
+  stroke: var(--cyan-bright);
+  opacity: 0.8;
+}
+
+.loc-beacon:hover .loc-beacon__ring {
+  opacity: 1;
+}
+
+.loc-beacon--scanning .loc-beacon__ring--outer {
+  stroke: var(--amber-dim);
+  animation: ring-expand 2s ease-out infinite;
+}
+
+.loc-beacon--scanning .loc-beacon__ring--mid {
+  stroke: var(--amber-warm);
+  animation: ring-expand 2s ease-out 0.5s infinite;
+}
+
+.loc-beacon--scanning .loc-beacon__ring--inner {
+  stroke: var(--amber-hot);
+  animation: ring-expand 2s ease-out 1s infinite;
+}
+
+@keyframes ring-expand {
+  0% { opacity: 0.8; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+.loc-beacon--locked .loc-beacon__ring {
+  stroke: var(--signal-active);
+  opacity: 1;
+}
+
+/* Crosshairs */
+.loc-beacon__crosshair {
+  stroke: var(--cyan-muted);
+  stroke-width: 1;
+  opacity: 0.6;
+  transition: all 0.3s ease;
+}
+
+.loc-beacon:hover .loc-beacon__crosshair {
+  stroke: var(--cyan-bright);
+  opacity: 1;
+}
+
+.loc-beacon--scanning .loc-beacon__crosshair {
+  stroke: var(--amber-warm);
+  animation: crosshair-blink 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes crosshair-blink {
+  from { opacity: 0.4; }
+  to { opacity: 1; }
+}
+
+.loc-beacon--locked .loc-beacon__crosshair {
+  stroke: var(--signal-active);
+  opacity: 1;
+}
+
+/* Radar sweep line */
+.loc-beacon__sweep-line {
+  stroke: var(--cyan-glow);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 4px var(--cyan-glow));
+}
+
+/* Center core beacon */
+.loc-beacon__core {
+  fill: var(--cyan-glow);
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 0 4px var(--cyan-glow));
+}
+
+.loc-beacon:hover .loc-beacon__core {
+  filter: drop-shadow(0 0 8px var(--cyan-glow));
+  r: 5;
+}
+
+.loc-beacon--scanning .loc-beacon__core {
+  fill: var(--amber-warm);
+  filter: drop-shadow(0 0 6px var(--amber-warm));
+  animation: core-blink 0.3s ease-in-out infinite alternate;
+}
+
+@keyframes core-blink {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}
+
+.loc-beacon__core--locked {
+  fill: var(--signal-active);
+  filter: drop-shadow(0 0 10px var(--signal-active));
+}
+
+/* Success pulse effect */
+.loc-beacon__pulse {
+  fill: none;
+  stroke: var(--signal-active);
+  stroke-width: 2;
+  animation: beacon-pulse-ring 1s ease-out infinite;
+}
+
+@keyframes beacon-pulse-ring {
+  0% {
+    r: 4;
+    opacity: 1;
+  }
+  100% {
+    r: 24;
+    opacity: 0;
+  }
+}
+
+/* Label below radar */
+.loc-beacon__label {
+  @apply relative z-10 flex items-center justify-center gap-1;
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  transition: color 0.3s ease;
+}
+
+.loc-beacon:hover .loc-beacon__label {
+  color: var(--cyan-bright);
+}
+
+.loc-beacon--scanning .loc-beacon__label {
+  color: var(--amber-warm);
+}
+
+.loc-beacon--error .loc-beacon__label {
+  color: var(--signal-error);
+}
+
+.loc-beacon--locked .loc-beacon__label {
+  color: var(--signal-active);
+}
+
+/* Animated dots for loading */
+.loc-beacon__dots::after {
+  content: '';
+  animation: loading-dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes loading-dots {
+  0% { content: ''; }
+  25% { content: '.'; }
+  50% { content: '..'; }
+  75% { content: '...'; }
+  100% { content: ''; }
+}
+
+/* Status indicator dot */
+.loc-beacon__status {
+  @apply absolute top-1 right-1 opacity-0 transition-opacity duration-300;
+}
+
+.loc-beacon__status--active {
+  opacity: 1;
+}
+
+.loc-beacon__status-dot {
+  @apply block w-2 h-2 rounded-full;
+  background: var(--cyan-glow);
+  box-shadow: 0 0 6px var(--cyan-glow);
+  animation: status-blink 1s ease-in-out infinite;
+}
+
+.loc-beacon--scanning .loc-beacon__status-dot {
+  background: var(--amber-warm);
+  box-shadow: 0 0 6px var(--amber-warm);
+}
+
+.loc-beacon--error .loc-beacon__status-dot {
+  background: var(--signal-error);
+  box-shadow: 0 0 6px var(--signal-error);
+  animation: none;
+}
+
+.loc-beacon--locked .loc-beacon__status-dot {
+  background: var(--signal-active);
+  box-shadow: 0 0 6px var(--signal-active);
+}
+
+@keyframes status-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Info panel on hover */
+.loc-beacon__info {
+  @apply absolute left-full ml-3 top-1/2 -translate-y-1/2;
+  background: var(--space-panel);
+  border: 1px solid var(--cyan-dim);
+  padding: 0;
+  min-width: 140px;
+  animation: info-slide-in 0.2s ease-out;
+
+  /* Chamfered corners */
+  clip-path: polygon(
+    0 6px,
+    6px 0,
+    100% 0,
+    100% calc(100% - 6px),
+    calc(100% - 6px) 100%,
+    0 100%
+  );
+}
+
+@keyframes info-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+.loc-beacon__info-header {
+  @apply flex items-center gap-2 px-3 py-1.5;
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--cyan-bright);
+  background: var(--space-elevated);
+  border-bottom: 1px solid var(--cyan-dim);
+}
+
+.loc-beacon__info-icon {
+  color: var(--cyan-glow);
+  font-size: 0.625rem;
+}
+
+.loc-beacon__info-text {
+  @apply px-3 py-2;
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.loc-beacon__info-error {
+  @apply px-3 py-2;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--signal-error);
+  background: rgba(239, 68, 68, 0.05);
 }
