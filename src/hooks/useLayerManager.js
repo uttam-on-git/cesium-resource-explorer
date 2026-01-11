@@ -26,9 +26,12 @@ export function useLayerManager(viewerRef) {
   }, [viewerRef]);
 
   // load a layer
-  const loadLayer = useCallback(async (asset) => {
+  // options: { autoZoom: boolean } - fly to layer after loading
+  const loadLayer = useCallback(async (asset, options = {}) => {
     const viewer = getViewer();
     if (!viewer) return;
+
+    const { autoZoom = true } = options; // auto-zoom by default
 
     // if loading terrain and theres already one, gotta remove the old one first
     if (asset.type === 'terrain' && activeTerrain && activeTerrain !== asset.assetId) {
@@ -49,7 +52,7 @@ export function useLayerManager(viewerRef) {
     }));
 
     try {
-      await cesiumService.addLayer(viewer, asset);
+      await cesiumService.addLayer(viewer, asset, { autoZoom });
 
       // success!
       setLayerStates(prev => ({

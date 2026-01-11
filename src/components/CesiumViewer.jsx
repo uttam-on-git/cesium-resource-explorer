@@ -1,29 +1,31 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { CESIUM_TOKEN, ASSETS } from '../constants/assets';
 
-export default function CesiumViewer() {
+// using forwardRef so parent can access the viewer
+const CesiumViewer = forwardRef(function CesiumViewer(props, ref) {
   const containerRef = useRef(null);
   const viewerRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // expose viewer to parent component
+  useImperativeHandle(ref, () => viewerRef.current, []);
 
   useEffect(() => {
     let mounted = true;
 
     async function initCesium() {
       try {
-        // Dynamically import Cesium to ensure proper loading
         const Cesium = await import('cesium');
 
         if (!mounted || !containerRef.current) return;
 
-        // Set the access token
         Cesium.Ion.defaultAccessToken = CESIUM_TOKEN;
 
-        // Find the basemap asset (asset ID 3830186)
+        // find the basemap asset
         const basemapAsset = ASSETS.find(a => a.assetId === 3830186);
 
-        // Create the viewer with timeline hidden
+        // create viewer with timeline hidden
         const viewer = new Cesium.Viewer(containerRef.current, {
           timeline: false,
           animation: false,
@@ -35,10 +37,9 @@ export default function CesiumViewer() {
           fullscreenButton: true,
         });
 
-        // Remove default imagery layer
+        // remove default imagery and add our basemap
         viewer.imageryLayers.removeAll();
 
-        // Add Ion asset 3830186 as basemap
         if (basemapAsset) {
           const imageryProvider = await Cesium.IonImageryProvider.fromAssetId(
             basemapAsset.assetId
@@ -48,6 +49,11 @@ export default function CesiumViewer() {
 
         viewerRef.current = viewer;
         setIsLoading(false);
+
+        // call onReady if provided
+        if (props.onReady) {
+          props.onReady(viewer);
+        }
       } catch (err) {
         console.error('Failed to initialize Cesium:', err);
         setError(err.message);
@@ -83,4 +89,6 @@ export default function CesiumViewer() {
       <div ref={containerRef} className="cesium-container" />
     </div>
   );
-}
+});
+
+export default CesiumViewer;
