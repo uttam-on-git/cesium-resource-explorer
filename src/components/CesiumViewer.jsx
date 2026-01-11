@@ -6,6 +6,7 @@ const CesiumViewer = forwardRef(function CesiumViewer(props, ref) {
   const containerRef = useRef(null);
   const viewerRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadStatus, setLoadStatus] = useState('INITIALIZING SYSTEMS');
   const [error, setError] = useState(null);
 
   // expose viewer to parent component
@@ -16,15 +17,18 @@ const CesiumViewer = forwardRef(function CesiumViewer(props, ref) {
 
     async function initCesium() {
       try {
+        setLoadStatus('LOADING CESIUM ENGINE');
         const Cesium = await import('cesium');
 
         if (!mounted || !containerRef.current) return;
 
+        setLoadStatus('AUTHENTICATING ION ACCESS');
         Cesium.Ion.defaultAccessToken = CESIUM_TOKEN;
 
         // find the basemap asset
         const basemapAsset = ASSETS.find(a => a.assetId === 3830186);
 
+        setLoadStatus('INITIALIZING 3D VIEWER');
         // create viewer with timeline hidden
         const viewer = new Cesium.Viewer(containerRef.current, {
           timeline: false,
@@ -41,13 +45,18 @@ const CesiumViewer = forwardRef(function CesiumViewer(props, ref) {
         viewer.imageryLayers.removeAll();
 
         if (basemapAsset) {
+          setLoadStatus('LOADING BASE IMAGERY');
           const imageryProvider = await Cesium.IonImageryProvider.fromAssetId(
             basemapAsset.assetId
           );
           viewer.imageryLayers.addImageryProvider(imageryProvider);
         }
 
+        setLoadStatus('SYSTEMS ONLINE');
         viewerRef.current = viewer;
+
+        // brief delay to show "systems online" message
+        await new Promise(resolve => setTimeout(resolve, 300));
         setIsLoading(false);
 
         // call onReady if provided
@@ -74,7 +83,13 @@ const CesiumViewer = forwardRef(function CesiumViewer(props, ref) {
   if (error) {
     return (
       <div className="cesium-error">
-        <p>Failed to load Cesium: {error}</p>
+        <div className="loading-orbital" style={{ marginBottom: '2rem' }}>
+          <div className="loading-ring" style={{ borderColor: '#ef4444', opacity: 0.5 }} />
+          <div className="loading-ring" style={{ borderColor: '#ef4444', opacity: 0.7 }} />
+          <div className="loading-core" style={{ background: 'radial-gradient(circle, #ef4444 0%, transparent 70%)' }} />
+        </div>
+        <p style={{ letterSpacing: '0.1em', textTransform: 'uppercase' }}>SYSTEM FAILURE</p>
+        <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{error}</p>
       </div>
     );
   }
@@ -83,7 +98,14 @@ const CesiumViewer = forwardRef(function CesiumViewer(props, ref) {
     <div className="cesium-wrapper">
       {isLoading && (
         <div className="cesium-loading">
-          <p>Loading Cesium viewer...</p>
+          <div className="loading-orbital">
+            <div className="loading-ring" />
+            <div className="loading-ring" />
+            <div className="loading-ring" />
+            <div className="loading-core" />
+          </div>
+          <p className="loading-text">Cesium Resource Explorer</p>
+          <p className="loading-status">{loadStatus}</p>
         </div>
       )}
       <div ref={containerRef} className="cesium-container" />

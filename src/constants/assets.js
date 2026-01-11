@@ -45,12 +45,12 @@ export const ASSETS = [
 ];
 
 export const SEARCH_LOCATIONS = [
-  { name: 'New Delhi, India', lat: 28.6139, lon: 77.2090 },
-  { name: 'Mumbai, India', lat: 19.0760, lon: 72.8777 },
-  { name: 'Bangalore, India', lat: 12.9716, lon: 77.5946 },
-  { name: 'Zurich, Switzerland', lat: 47.3769, lon: 8.5417 },
-  { name: 'Geneva, Switzerland', lat: 46.2044, lon: 6.1432 },
-  { name: 'New York, USA', lat: 40.7128, lon: -74.0060 },
-  { name: 'London, UK', lat: 51.5074, lon: -0.1278 },
-  { name: 'Tokyo, Japan', lat: 35.6762, lon: 139.6503 }
+  { name: 'New Delhi, India', lat: 28.6139, lon: 77.2090, altitude: 20000 },
+  { name: 'Mumbai, India', lat: 19.0760, lon: 72.8777, altitude: 25000 },
+  { name: 'Bangalore, India', lat: 12.9716, lon: 77.5946, altitude: 20000 },
+  { name: 'Zurich, Switzerland', lat: 47.3769, lon: 8.5417, altitude: 15000 },
+  { name: 'Geneva, Switzerland', lat: 46.2044, lon: 6.1432, altitude: 15000 },
+  { name: 'New York, USA', lat: 40.7128, lon: -74.0060, altitude: 30000 },
+  { name: 'London, UK', lat: 51.5074, lon: -0.1278, altitude: 25000 },
+  { name: 'Tokyo, Japan', lat: 35.6762, lon: 139.6503, altitude: 30000 }
 ];
