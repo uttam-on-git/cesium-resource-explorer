@@ -571,6 +571,63 @@
   display: none !important;
 }
 
+/* Reposition Cesium toolbar to avoid overlap with LayerManager */
+.cesium-viewer-toolbar {
+  top: auto !important;
+  bottom: 24px !important;
+  right: 16px !important;
+  background: var(--space-panel) !important;
+  border: 1px solid var(--cyan-dim) !important;
+  border-radius: 0 !important;
+  padding: 4px !important;
+  clip-path: polygon(
+    0 8px,
+    8px 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+}
+
+/* Style Cesium toolbar buttons to match theme */
+.cesium-viewer-toolbar .cesium-button {
+  background: var(--space-deep) !important;
+  border: 1px solid var(--text-dim) !important;
+  border-radius: 0 !important;
+  fill: var(--text-secondary) !important;
+  color: var(--text-secondary) !important;
+  transition: all 0.2s ease !important;
+}
+
+.cesium-viewer-toolbar .cesium-button:hover {
+  background: var(--space-elevated) !important;
+  border-color: var(--cyan-muted) !important;
+  fill: var(--cyan-bright) !important;
+  color: var(--cyan-bright) !important;
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.2) !important;
+}
+
+.cesium-viewer-toolbar .cesium-button:active {
+  background: rgba(0, 212, 255, 0.1) !important;
+}
+
+/* Style the scene mode picker dropdown */
+.cesium-sceneModePicker-wrapper {
+  background: var(--space-panel) !important;
+  border: 1px solid var(--cyan-dim) !important;
+}
+
+.cesium-sceneModePicker-dropDown-icon {
+  fill: var(--text-secondary) !important;
+}
+
+.cesium-sceneModePicker-wrapper:hover .cesium-sceneModePicker-dropDown-icon {
+  fill: var(--cyan-bright) !important;
+}
+
 /* Custom selection color */
 ::selection {
   background: var(--cyan-glow);
@@ -1451,4 +1508,162 @@
   font-size: 0.625rem;
   color: var(--signal-error);
   background: rgba(239, 68, 68, 0.05);
+}
+
+/* ============================================
+   FEATURE INSPECTOR PANEL
+   Displays properties of clicked GeoJSON features
+   ============================================ */
+
+.feature-inspector {
+  @apply absolute bottom-6 right-4 z-[1000] w-80 max-h-[60vh] overflow-hidden;
+  background: var(--space-panel);
+  border: 1px solid var(--cyan-dim);
+  animation: inspector-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Chamfered corners */
+  clip-path: polygon(
+    0 12px,
+    12px 0,
+    calc(100% - 12px) 0,
+    100% 12px,
+    100% calc(100% - 12px),
+    calc(100% - 12px) 100%,
+    12px 100%,
+    0 calc(100% - 12px)
+  );
+}
+
+@keyframes inspector-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.feature-inspector-header {
+  @apply flex items-center justify-between px-4 py-3;
+  background: linear-gradient(180deg, var(--space-elevated) 0%, var(--space-panel) 100%);
+  border-bottom: 1px solid var(--cyan-dim);
+}
+
+.feature-inspector-title {
+  @apply flex items-center gap-2;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cyan-bright);
+}
+
+.feature-inspector-title svg {
+  color: var(--amber-warm);
+}
+
+.feature-inspector-close {
+  @apply p-1.5 transition-all duration-200;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.feature-inspector-close:hover {
+  color: var(--signal-error);
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.feature-inspector-content {
+  @apply p-3 overflow-y-auto;
+  max-height: calc(60vh - 60px);
+}
+
+.feature-inspector-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.feature-inspector-content::-webkit-scrollbar-track {
+  background: var(--space-deep);
+}
+
+.feature-inspector-content::-webkit-scrollbar-thumb {
+  background: var(--cyan-dim);
+  border-radius: 2px;
+}
+
+.feature-inspector-section {
+  @apply mb-3;
+}
+
+.feature-inspector-section:last-child {
+  @apply mb-0;
+}
+
+.feature-inspector-section-header {
+  @apply flex items-center gap-2 mb-2 pb-1;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--text-dim);
+}
+
+.feature-inspector-section-header svg {
+  color: var(--cyan-muted);
+}
+
+.feature-inspector-coords {
+  @apply flex gap-4;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.feature-inspector-props {
+  @apply flex flex-col gap-1;
+}
+
+.feature-inspector-prop {
+  @apply flex justify-between items-start gap-2 px-2 py-1.5;
+  background: var(--space-deep);
+  border-left: 2px solid var(--text-dim);
+  transition: all 0.2s;
+}
+
+.feature-inspector-prop:hover {
+  border-left-color: var(--cyan-muted);
+  background: var(--space-elevated);
+}
+
+.feature-inspector-prop-key {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--cyan-bright);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.feature-inspector-prop-value {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  text-align: right;
+  word-break: break-word;
+}
+
+.feature-inspector-empty {
+  @apply flex flex-col items-center justify-center gap-2 py-6;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
 }
