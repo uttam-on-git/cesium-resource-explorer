@@ -1,9 +1,12 @@
 import { useRef, useState } from "react";
 import "./App.css";
 import CesiumViewer from "./components/CesiumViewer";
+import ErrorBoundary from "./components/ErrorBoundary";
+import FeatureInspector from "./components/FeatureInspector";
 import LayerManager from "./components/LayerManager";
 import LocationSearch from "./components/LocationSearch";
 import MyLocation from "./components/MyLocation";
+import { useFeaturePicker } from "./hooks/useFeaturePicker";
 import { useLayerManager } from "./hooks/useLayerManager";
 import { flyToUserLocation } from "./services/cesiumService";
 
@@ -11,10 +14,13 @@ function App() {
   const viewerRef = useRef(null);
   const [viewerReady, setViewerReady] = useState(false);
 
-  // hook needs the viewer ref to work
+  // Layer management hook
   const { layerStates, toggleLayer, toggleVisibility, flyTo } = useLayerManager(viewerRef);
 
-  // called when cesium viewer is ready
+  // Feature picking hook (for GeoJSON inspection)
+  const { selectedFeature, clearSelection } = useFeaturePicker(viewerRef);
+
+  // Called when Cesium viewer is ready
   const handleViewerReady = (viewer) => {
     viewerRef.current = viewer;
     setViewerReady(true);
@@ -28,26 +34,34 @@ function App() {
 
   return (
     <div className="app">
-      <CesiumViewer ref={viewerRef} onReady={handleViewerReady} />
+      <ErrorBoundary>
+        <CesiumViewer ref={viewerRef} onReady={handleViewerReady} />
 
-      {/* only show UI when viewer is ready */}
-      {viewerReady && (
-        <>
-          <LocationSearch
-            viewerRef={viewerRef}
-            layerStates={layerStates}
-            toggleLayer={toggleLayer}
-            flyTo={flyTo}
-          />
-          <MyLocation viewerRef={viewerRef} />
-          <LayerManager
-            layerStates={layerStates}
-            toggleLayer={toggleLayer}
-            toggleVisibility={toggleVisibility}
-            flyTo={flyTo}
-          />
-        </>
-      )}
+        {/* Only show UI when viewer is ready */}
+        {viewerReady && (
+          <>
+            <LocationSearch
+              viewerRef={viewerRef}
+              layerStates={layerStates}
+              toggleLayer={toggleLayer}
+              flyTo={flyTo}
+            />
+            <MyLocation viewerRef={viewerRef} />
+            <LayerManager
+              layerStates={layerStates}
+              toggleLayer={toggleLayer}
+              toggleVisibility={toggleVisibility}
+              flyTo={flyTo}
+            />
+
+            {/* Feature inspector - shows when a GeoJSON feature is clicked */}
+            <FeatureInspector
+              feature={selectedFeature}
+              onClose={clearSelection}
+            />
+          </>
+        )}
+      </ErrorBoundary>
     </div>
   );
 }
