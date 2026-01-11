@@ -1,10 +1,9 @@
 import * as Cesium from 'cesium';
 
-// keeping track of which layers are loaded so we don't load them twice
+// Registry of loaded layers - prevents duplicate loading
 const loadedLayers = new Map();
 
-// main function to add any type of layer
-// options: { autoZoom: boolean } - fly to layer after loading
+// Add layer to viewer based on asset type
 export async function addLayer(viewer, asset, options = {}) {
   if (!viewer || viewer.isDestroyed()) {
     throw new Error('Viewer not available');
@@ -72,26 +71,22 @@ export function removeLayer(viewer, asset) {
   const loaded = loadedLayers.get(asset.assetId);
   if (!loaded) return;
 
-  // different removal method for each type
-  // using destroy: true where possible to free up memory
+  // Each type requires different cleanup to free memory
   switch (loaded.type) {
     case 'imagery':
-      // second param true = destroy the layer
       viewer.imageryLayers.remove(loaded.layer, true);
       break;
     case 'terrain':
-      // cant really remove terrain, just reset to default ellipsoid
+      // Reset to default ellipsoid (terrain cannot be removed, only replaced)
       viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
       break;
     case '3dtiles':
-      // second param true = destroy the tileset
       viewer.scene.primitives.remove(loaded.layer);
       if (!loaded.layer.isDestroyed()) {
         loaded.layer.destroy();
       }
       break;
     case 'geojson':
-      // second param true = destroy the datasource
       viewer.dataSources.remove(loaded.layer, true);
       break;
   }
@@ -115,7 +110,7 @@ export function setLayerVisibility(asset, visible) {
       loaded.layer.show = visible;
       break;
     case 'terrain':
-      // terrain doesnt have a show property unfortunately
+      // Terrain visibility cannot be toggled (Cesium limitation)
       break;
   }
 }
@@ -155,7 +150,7 @@ export async function flyToLayer(viewer, asset, options = {}) {
   }
 }
 
-// --- helper functions below ---
+// --- Layer loading helpers ---
 
 async function addImageryLayer(viewer, assetId) {
   const provider = await Cesium.IonImageryProvider.fromAssetId(assetId);
@@ -177,10 +172,7 @@ async function add3DTileset(viewer, assetId) {
 async function addGeoJson(viewer, assetId) {
   const resource = await Cesium.IonResource.fromAssetId(assetId);
 
-  // for large geojson files, use lightweight styling
-  // - semi-transparent fill
-  // - thin stroke for better performance with many polygons
-  // - clampToGround true so it follows terrain
+  // Lightweight styling optimized for large datasets
   const dataSource = await Cesium.GeoJsonDataSource.load(resource, {
     stroke: Cesium.Color.YELLOW,
     strokeWidth: 1,
@@ -192,12 +184,12 @@ async function addGeoJson(viewer, assetId) {
   return dataSource;
 }
 
-// --- My Location feature ---
+// --- Geolocation feature ---
 
-// store reference to the user location marker so we can update it
+// Reference to user location marker entity
 let userLocationEntity = null;
 
-// fly camera to user's current location and add a marker
+// Fly to user's GPS location and place a marker
 export function flyToUserLocation(viewer) {
   return new Promise((resolve, reject) => {
     if (!viewer || viewer.isDestroyed()) {
@@ -281,32 +273,32 @@ export function flyToUserLocation(viewer) {
   });
 }
 
-// create a simple location marker using canvas
+// Generate location pin marker using Canvas API
 function createLocationMarkerImage() {
   const canvas = document.createElement('canvas');
   canvas.width = 32;
   canvas.height = 40;
   const ctx = canvas.getContext('2d');
 
-  // pin shape
+  // Pin shape path
   ctx.beginPath();
   ctx.arc(16, 14, 12, Math.PI, 0, false);
   ctx.lineTo(16, 38);
   ctx.closePath();
 
-  // gradient fill - cyan theme to match the app
+  // Gradient fill matching app theme
   const gradient = ctx.createLinearGradient(0, 0, 0, 40);
   gradient.addColorStop(0, '#00d4ff');
   gradient.addColorStop(1, '#0891b2');
   ctx.fillStyle = gradient;
   ctx.fill();
 
-  // white border
+  // Border stroke
   ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  // inner circle
+  // Center dot
   ctx.beginPath();
   ctx.arc(16, 14, 5, 0, Math.PI * 2);
   ctx.fillStyle = '#ffffff';
