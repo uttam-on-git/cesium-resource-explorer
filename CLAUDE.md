@@ -21,6 +21,6 @@ This is a React + Vite application that integrates CesiumJS for 3D geospatial vi
 
 ## Key Directories
 
-- `src/components/` - React components (currently empty, for future UI)
-- `src/services/` - Service modules (currently empty, for API/data services)
+- `src/components/` - React components
+- `src/services/` - Service modules
 - `src/constants/` - Configuration constants including Cesium assets
