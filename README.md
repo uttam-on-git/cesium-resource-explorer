@@ -57,7 +57,6 @@ npm run dev
 | `npm run build` | Create production build in `dist/` |
 | `npm run preview` | Preview production build locally |
 | `npm run lint` | Run ESLint for code quality checks |
-| `npm run test` | Run test suite |
 
 ## Project Structure
 
