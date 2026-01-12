@@ -117,9 +117,13 @@ User Action → useLayerManager Hook → cesiumService → Cesium Viewer
 
 ## Keyboard Shortcuts
 
-| Key | Action |
-|-----|--------|
-| `Esc` | Close feature inspector panel |
+| Key | Context | Action |
+|-----|---------|--------|
+| `↓` | Search input | Open dropdown / Navigate to next result |
+| `↑` | Search dropdown | Navigate to previous result |
+| `Enter` | Search dropdown | Select highlighted item |
+| `Esc` | Search dropdown | Close dropdown |
+| `Esc` | Feature inspector | Close inspector panel |
 
 ## Known Limitations
 

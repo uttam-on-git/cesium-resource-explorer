@@ -21,18 +21,17 @@ const TYPE_ICONS = {
   geojson: MapPin,
 };
 
-// type badge classes
-const TYPE_BADGE_CLASSES = {
-  imagery: 'layer-type-imagery',
-  terrain: 'layer-type-terrain',
-  '3dtiles': 'layer-type-3dtiles',
-  geojson: 'layer-type-geojson',
-};
+// Group configuration with display names and order
+const LAYER_GROUPS = [
+  { type: 'imagery', label: 'Imagery', icon: Map },
+  { type: 'terrain', label: 'Terrain', icon: Mountain },
+  { type: 'geojson', label: 'Vector Data', icon: MapPin },
+  { type: '3dtiles', label: '3D Tiles', icon: Building2 },
+];
 
 // Memoized layer item to prevent re-renders when other layers change
 const LayerItem = memo(function LayerItem({ asset, state, toggleLayer, toggleVisibility, flyTo }) {
   const TypeIcon = TYPE_ICONS[asset.type];
-  const typeBadgeClass = TYPE_BADGE_CLASSES[asset.type];
 
   return (
     <div className={`layer-item ${state.loaded ? 'layer-loaded' : ''}`}>
@@ -48,11 +47,6 @@ const LayerItem = memo(function LayerItem({ asset, state, toggleLayer, toggleVis
           <TypeIcon size={16} className="layer-icon" />
           <span className="layer-name">{asset.name}</span>
         </label>
-
-        {/* type badge */}
-        <span className={`layer-type-badge ${typeBadgeClass}`}>
-          {asset.type === '3dtiles' ? '3D' : asset.type.slice(0, 3).toUpperCase()}
-        </span>
 
         {/* show loading spinner */}
         {state.loading && <Loader2 size={16} className="layer-loading" />}
@@ -110,6 +104,15 @@ export default function LayerManager({ layerStates, toggleLayer, toggleVisibilit
     [layerStates]
   );
 
+  // memoize grouped assets
+  const groupedAssets = useMemo(() => {
+    const groups = {};
+    LAYER_GROUPS.forEach(group => {
+      groups[group.type] = ASSETS.filter(asset => asset.type === group.type);
+    });
+    return groups;
+  }, []);
+
   // collapsed view - just a small button
   if (collapsed) {
     return (
@@ -142,16 +145,37 @@ export default function LayerManager({ layerStates, toggleLayer, toggleVisibilit
       </div>
 
       <div className="layer-list">
-        {ASSETS.map(asset => (
-          <LayerItem
-            key={asset.id}
-            asset={asset}
-            state={layerStates[asset.assetId]}
-            toggleLayer={toggleLayer}
-            toggleVisibility={toggleVisibility}
-            flyTo={flyTo}
-          />
-        ))}
+        {LAYER_GROUPS.map(group => {
+          const assets = groupedAssets[group.type];
+          if (!assets || assets.length === 0) return null;
+
+          const GroupIcon = group.icon;
+          const loadedInGroup = assets.filter(a => layerStates[a.assetId]?.loaded).length;
+
+          return (
+            <div key={group.type} className="layer-group">
+              <div className={`layer-group-header layer-group-header--${group.type}`}>
+                <GroupIcon size={12} className="layer-group-icon" />
+                <span className="layer-group-label">{group.label}</span>
+                {loadedInGroup > 0 && (
+                  <span className="layer-group-count">{loadedInGroup}/{assets.length}</span>
+                )}
+              </div>
+              <div className="layer-group-items">
+                {assets.map(asset => (
+                  <LayerItem
+                    key={asset.id}
+                    asset={asset}
+                    state={layerStates[asset.assetId]}
+                    toggleLayer={toggleLayer}
+                    toggleVisibility={toggleVisibility}
+                    flyTo={flyTo}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
