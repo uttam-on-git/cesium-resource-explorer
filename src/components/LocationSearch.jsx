@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { SEARCH_LOCATIONS, ASSETS } from '../constants/assets';
 import {
   Search,
@@ -30,23 +30,29 @@ export default function LocationSearch({ viewerRef, layerStates, toggleLayer, fl
   const dropdownRef = useRef(null);
   const inputRef = useRef(null);
 
-  // filter locations based on search query
-  const filteredLocations = SEARCH_LOCATIONS.filter(loc =>
-    loc.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // memoize filtered locations to avoid recalculating on every render
+  const filteredLocations = useMemo(() =>
+    SEARCH_LOCATIONS.filter(loc =>
+      loc.name.toLowerCase().includes(searchQuery.toLowerCase())
+    ),
+    [searchQuery]
   );
 
-  // filter layers based on search query
-  const filteredLayers = ASSETS.filter(asset =>
-    asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    asset.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    asset.description.toLowerCase().includes(searchQuery.toLowerCase())
+  // memoize filtered layers to avoid recalculating on every render
+  const filteredLayers = useMemo(() =>
+    ASSETS.filter(asset =>
+      asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      asset.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      asset.description.toLowerCase().includes(searchQuery.toLowerCase())
+    ),
+    [searchQuery]
   );
 
-  // combined results for keyboard navigation
-  const allResults = [
+  // memoize combined results for keyboard navigation
+  const allResults = useMemo(() => [
     ...filteredLocations.map(loc => ({ ...loc, resultType: 'location' })),
     ...filteredLayers.map(layer => ({ ...layer, resultType: 'layer' }))
-  ];
+  ], [filteredLocations, filteredLayers]);
 
   const hasResults = allResults.length > 0;
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo, useMemo } from 'react';
 import { ASSETS } from '../constants/assets';
 import {
   Map,
@@ -29,11 +29,86 @@ const TYPE_BADGE_CLASSES = {
   geojson: 'layer-type-geojson',
 };
 
+// Memoized layer item to prevent re-renders when other layers change
+const LayerItem = memo(function LayerItem({ asset, state, toggleLayer, toggleVisibility, flyTo }) {
+  const TypeIcon = TYPE_ICONS[asset.type];
+  const typeBadgeClass = TYPE_BADGE_CLASSES[asset.type];
+
+  return (
+    <div className={`layer-item ${state.loaded ? 'layer-loaded' : ''}`}>
+      <div className="layer-item-header">
+        <label className="layer-checkbox-label">
+          <input
+            type="checkbox"
+            checked={state.loaded}
+            disabled={state.loading}
+            onChange={() => toggleLayer(asset)}
+            className="layer-checkbox"
+          />
+          <TypeIcon size={16} className="layer-icon" />
+          <span className="layer-name">{asset.name}</span>
+        </label>
+
+        {/* type badge */}
+        <span className={`layer-type-badge ${typeBadgeClass}`}>
+          {asset.type === '3dtiles' ? '3D' : asset.type.slice(0, 3).toUpperCase()}
+        </span>
+
+        {/* show loading spinner */}
+        {state.loading && <Loader2 size={16} className="layer-loading" />}
+      </div>
+
+      {/* extra controls when layer is loaded */}
+      {state.loaded && (
+        <div className="layer-controls">
+          {/* visibility toggle - not for terrain since it cannot be hidden */}
+          {asset.type !== 'terrain' && (
+            <button
+              onClick={() => toggleVisibility(asset)}
+              className={`layer-btn ${state.visible ? 'layer-btn-visible' : 'layer-btn-hidden'}`}
+              title={state.visible ? 'Hide layer' : 'Show layer'}
+            >
+              {state.visible ? <Eye size={14} /> : <EyeOff size={14} />}
+            </button>
+          )}
+
+          {/* fly to - only for 3dtiles and geojson */}
+          {(asset.type === '3dtiles' || asset.type === 'geojson') && (
+            <button
+              onClick={() => flyTo(asset)}
+              className="layer-btn layer-btn-fly"
+              title="Navigate to layer"
+            >
+              <Crosshair size={14} />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* show error if something went wrong */}
+      {state.error && (
+        <div className="layer-error">
+          <span>ERROR:</span> {state.error}
+        </div>
+      )}
+
+      {/* description with optional size */}
+      <p className="layer-description">
+        {asset.description}
+        {asset.size && <span className="layer-size">{asset.size}</span>}
+      </p>
+    </div>
+  );
+});
+
 export default function LayerManager({ layerStates, toggleLayer, toggleVisibility, flyTo }) {
   const [collapsed, setCollapsed] = useState(false);
 
-  // count how many layers are loaded for the badge
-  const loadedCount = Object.values(layerStates).filter(s => s.loaded).length;
+  // memoize loaded count to avoid recalculating on every render
+  const loadedCount = useMemo(
+    () => Object.values(layerStates).filter(s => s.loaded).length,
+    [layerStates]
+  );
 
   // collapsed view - just a small button
   if (collapsed) {
@@ -67,80 +142,16 @@ export default function LayerManager({ layerStates, toggleLayer, toggleVisibilit
       </div>
 
       <div className="layer-list">
-        {ASSETS.map(asset => {
-          const state = layerStates[asset.assetId];
-          const TypeIcon = TYPE_ICONS[asset.type];
-          const typeBadgeClass = TYPE_BADGE_CLASSES[asset.type];
-
-          return (
-            <div
-              key={asset.id}
-              className={`layer-item ${state.loaded ? 'layer-loaded' : ''}`}
-            >
-              <div className="layer-item-header">
-                <label className="layer-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={state.loaded}
-                    disabled={state.loading}
-                    onChange={() => toggleLayer(asset)}
-                    className="layer-checkbox"
-                  />
-                  <TypeIcon size={16} className="layer-icon" />
-                  <span className="layer-name">{asset.name}</span>
-                </label>
-
-                {/* type badge */}
-                <span className={`layer-type-badge ${typeBadgeClass}`}>
-                  {asset.type === '3dtiles' ? '3D' : asset.type.slice(0, 3).toUpperCase()}
-                </span>
-
-                {/* show loading spinner */}
-                {state.loading && <Loader2 size={16} className="layer-loading" />}
-              </div>
-
-              {/* extra controls when layer is loaded */}
-              {state.loaded && (
-                <div className="layer-controls">
-                  {/* visibility toggle - not for terrain cuz it cant be hidden */}
-                  {asset.type !== 'terrain' && (
-                    <button
-                      onClick={() => toggleVisibility(asset)}
-                      className={`layer-btn ${state.visible ? 'layer-btn-visible' : 'layer-btn-hidden'}`}
-                      title={state.visible ? 'Hide layer' : 'Show layer'}
-                    >
-                      {state.visible ? <Eye size={14} /> : <EyeOff size={14} />}
-                    </button>
-                  )}
-
-                  {/* fly to - only for 3dtiles and geojson */}
-                  {(asset.type === '3dtiles' || asset.type === 'geojson') && (
-                    <button
-                      onClick={() => flyTo(asset)}
-                      className="layer-btn layer-btn-fly"
-                      title="Navigate to layer"
-                    >
-                      <Crosshair size={14} />
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* show error if something went wrong */}
-              {state.error && (
-                <div className="layer-error">
-                  <span>ERROR:</span> {state.error}
-                </div>
-              )}
-
-              {/* description with optional size */}
-              <p className="layer-description">
-                {asset.description}
-                {asset.size && <span className="layer-size">{asset.size}</span>}
-              </p>
-            </div>
-          );
-        })}
+        {ASSETS.map(asset => (
+          <LayerItem
+            key={asset.id}
+            asset={asset}
+            state={layerStates[asset.assetId]}
+            toggleLayer={toggleLayer}
+            toggleVisibility={toggleVisibility}
+            flyTo={flyTo}
+          />
+        ))}
       </div>
     </div>
   );
